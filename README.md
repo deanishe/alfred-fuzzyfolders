@@ -1,9 +1,3 @@
----
-title: Fuzzy Folders Help
-author: Dean Jackson <deanishe@deanishe.net>
-date: 2014-03-09
----
-
 # Fuzzy Folders Alfred Workflow #
 
 Fuzzy search across folder subtrees.
@@ -16,13 +10,13 @@ You can use a **File Action** to intiate a fuzzy search on a folder or to assign
 
 ## Download ##
 
-Get the Workflow from GitHub.
+Get the Workflow from [GitHub](https://github.com/deanishe/alfred-fuzzyfolders/raw/master/FuzzyFolders.alfredworkflow).
 
 ## Commands ##
 
 - `fuzzy` — List your Fuzzy Folders
 	+ `↩` — Run the associated keyword
-	+ `⌘+↩` — Delete the keyword / Fuzzy Folder combination
+	+ `⌘+↩` — Delete the keyword–Fuzzy Folder combination
 - `fzyup` — Recreate the Script Filters from your saved configuration (useful after an update)
 - `fzyhelp` — Open the help file in your browser
 
@@ -36,3 +30,12 @@ Get the Workflow from GitHub.
 - `↩` — Open folder in Finder
 - `⌘+↩` — Browse folder in Alfred
 
+## Bugs, questions, feedback ##
+
+You can [open an issue on GitHub](https://github.com/deanishe/alfred-fuzzyfolders/issues), or post on the Alfred Forum.
+
+## Licensing, other stuff ##
+
+This Workflow is made available under the [MIT Licence](http://opensource.org/licenses/MIT).
+
+It uses [docopt](https://github.com/docopt/docopt) and [Alfred-Workflow](https://github.com/deanishe/alfred-workflow).
