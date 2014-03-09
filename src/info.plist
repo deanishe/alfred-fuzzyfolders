@@ -154,7 +154,7 @@
 	<key>disabled</key>
 	<false/>
 	<key>name</key>
-	<string>FuzzyFolders</string>
+	<string>Fuzzy Folders</string>
 	<key>objects</key>
 	<array>
 		<dict>
@@ -599,110 +599,110 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<key>023B01E3-48DF-47F7-BA7C-FAD3A0D2739D</key>
 		<dict>
 			<key>ypos</key>
-			<real>130.0</real>
+			<real>130</real>
 		</dict>
 		<key>072ED033-882E-4FD9-B6DD-308AA679F35D</key>
 		<dict>
 			<key>ypos</key>
-			<real>240.0</real>
+			<real>240</real>
 		</dict>
 		<key>0D965234-E730-45BE-A07A-4BC8B87BF65F</key>
 		<dict>
 			<key>ypos</key>
-			<real>10.0</real>
+			<real>10</real>
 		</dict>
 		<key>2E60CB2E-B028-46F9-8A8E-B507A6B9E382</key>
 		<dict>
 			<key>ypos</key>
-			<real>910.0</real>
+			<real>910</real>
 		</dict>
 		<key>3AC082E0-F48F-4094-8B54-E039CDBC418B</key>
 		<dict>
 			<key>ypos</key>
-			<real>790.0</real>
+			<real>790</real>
 		</dict>
 		<key>5D907FEA-E291-40D6-81EA-03BBF88CBA19</key>
 		<dict>
 			<key>ypos</key>
-			<real>90.0</real>
+			<real>90</real>
 		</dict>
 		<key>64A5BF3F-BD7A-4909-A640-27F560FAB9C1</key>
 		<dict>
 			<key>ypos</key>
-			<real>630.0</real>
+			<real>630</real>
 		</dict>
 		<key>68C3E5B4-E26A-4D94-8951-8C2DB76040EA</key>
 		<dict>
 			<key>ypos</key>
-			<real>680.0</real>
+			<real>680</real>
 		</dict>
 		<key>7420E6D7-AD54-4CCB-A867-036168FFF97D</key>
 		<dict>
 			<key>ypos</key>
-			<real>790.0</real>
+			<real>790</real>
 		</dict>
 		<key>7C8FD108-CDDA-41BE-96B5-2B9A2B0ED46B</key>
 		<dict>
 			<key>ypos</key>
-			<real>350.0</real>
+			<real>350</real>
 		</dict>
 		<key>A6C04BBD-768E-4271-9E7F-B19D39A4EDBE</key>
 		<dict>
 			<key>ypos</key>
-			<real>350.0</real>
+			<real>350</real>
 		</dict>
 		<key>B0340064-83A3-4631-AE24-C3D774778CCC</key>
 		<dict>
 			<key>ypos</key>
-			<real>10.0</real>
+			<real>10</real>
 		</dict>
 		<key>BE24EC68-B0F7-4E83-969E-C2932974426F</key>
 		<dict>
 			<key>ypos</key>
-			<real>460.0</real>
+			<real>460</real>
 		</dict>
 		<key>C4DE39F8-29AD-474D-B7FB-1CDE8B0A81F2</key>
 		<dict>
 			<key>ypos</key>
-			<real>350.0</real>
+			<real>350</real>
 		</dict>
 		<key>C9B865B2-C678-490E-9B41-8E7086A40403</key>
 		<dict>
 			<key>ypos</key>
-			<real>240.0</real>
+			<real>240</real>
 		</dict>
 		<key>CA1FFD2B-8C73-4A26-974A-13C8E8EADAC0</key>
 		<dict>
 			<key>ypos</key>
-			<real>680.0</real>
+			<real>680</real>
 		</dict>
 		<key>DE2535F9-2D18-4F4D-BFE1-D6BBB65866B2</key>
 		<dict>
 			<key>ypos</key>
-			<real>570.0</real>
+			<real>570</real>
 		</dict>
 		<key>E65E3ED3-C8AF-40FC-A04D-EB697B63FC1C</key>
 		<dict>
 			<key>ypos</key>
-			<real>180.0</real>
+			<real>180</real>
 		</dict>
 		<key>E94550B1-B343-4CA1-8E9E-B4DA47DFC189</key>
 		<dict>
 			<key>ypos</key>
-			<real>460.0</real>
+			<real>460</real>
 		</dict>
 		<key>F3F04FEC-9503-444C-9AA3-81486E22D88D</key>
 		<dict>
 			<key>ypos</key>
-			<real>460.0</real>
+			<real>460</real>
 		</dict>
 		<key>FAE1BEE5-156E-4811-9A25-7DF84C67AADF</key>
 		<dict>
 			<key>ypos</key>
-			<real>450.0</real>
+			<real>450</real>
 		</dict>
 	</dict>
 	<key>webaddress</key>
-	<string></string>
+	<string>http://www.deanishe.net</string>
 </dict>
 </plist>
