@@ -66,11 +66,6 @@ ff.py <action> [<dir> | <profile>] [<query>]
 
 FuzzyFolders -- fuzzy search across a folder hierarchy
 
-Arguments:
-    <dir>      path to directory
-    <profile>  saved profile number
-    <query>    search query
-
 Usage:
     ff.py choose <dir>
     ff.py add <dir>
@@ -82,6 +77,14 @@ Usage:
     ff.py load-profile <profile>
     ff.py alfred-search <query>
     ff.py alfred-browse <dir>
+
+Arguments:
+    <dir>       Path to directory
+    <profile>   Saved profile number
+    <query>     Search query
+
+Options:
+    -h, --help  Show this message
 
 This script is meant to be called from Alfred.
 
