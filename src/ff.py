@@ -100,10 +100,9 @@ ALFRED_SCRIPT = 'tell application "Alfred 2" to search "{}"'
 
 # Keywords of script filters that shouldn't be removed
 RESERVED_KEYWORDS = [
-    ':fuzzychoose',
-    ':fuzzykeyword',
-    ':fuzzysearch',
-    ':fuzzyupdate'
+    ':fzychs',
+    ':fzykey',
+    ':fzysrch',
     'fuzzy'
 ]
 
@@ -298,7 +297,7 @@ class FuzzyFolders(object):
 
     def do_add(self):
         """Tell Alfred to ask for ``keyword``"""
-        return run_alfred(':fuzzykeyword {} {} '.format(
+        return run_alfred(':fzykey {} {} '.format(
             self.dirpath.abbr_noslash, DELIMITER))
 
     def do_remove(self):
@@ -357,7 +356,7 @@ class FuzzyFolders(object):
         if DELIMITER not in self.query:  # bounce path back to Alfred
             log.debug('No delimiter found')
             run_alfred(self.query)
-            # run_alfred(':fuzzychoose {}'.format(Dirpath.dirpath(
+            # run_alfred(':fzychs {}'.format(Dirpath.dirpath(
             #            self.query.strip()).abbr_slash))
             return 0
         root, query = self._parse_query(self.query)
@@ -454,7 +453,7 @@ class FuzzyFolders(object):
 
         if self.query.endswith(DELIMITER):  # user has deleted trailing space
             # back up the file tree
-            return run_alfred(':fuzzychoose {}'.format(
+            return run_alfred(':fzychs {}'.format(
                 Dirpath.dirpath(os.path.dirname(dirpath)).abbr_slash))
             return self.do_add()
         elif keyword == '':  # no keyword as yet
@@ -524,7 +523,7 @@ class FuzzyFolders(object):
     def do_alfred_search(self):
         """Initiate an ad-hoc search in Alfred"""
         dirpath = Dirpath.dirpath(self.query).abbr_noslash
-        return run_alfred(':fuzzysearch {} {} '.format(dirpath, DELIMITER))
+        return run_alfred(':fzysrch {} {} '.format(dirpath, DELIMITER))
 
     def do_alfred_browse(self):
         """Open directory in Alfred"""
