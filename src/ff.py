@@ -14,23 +14,22 @@ from __future__ import print_function, unicode_literals
 
 Usage:
 
-    <DIR> is a path to a directory.
+    <dir> is a path to a directory.
     <query> may be a query or a dirpath and query joined with DELIMITER
-    <PROFILE> is a number referring to a key in `wf.settings['profiles']`
+    <profile> is a number referring to a key in `wf.settings['profiles']`
 
-    ff.py choose <DIR>
-        Browse <DIR> in Alfred. Displays <DIR> and its subdirectories. Calls
+    ff.py choose <dir>
+        Browse <dir> in Alfred. Displays <dir> and its subdirectories. Calls
         `ff.py add`
-    ff.py add <DIR>
-        Add <DIR> as Fuzzy Folder. Tells Alfred to ask for a keyword (via
+    ff.py add <dir>
+        Add <dir> as Fuzzy Folder. Tells Alfred to ask for a keyword (via
         `ff.py keyword``).
-    ff.py remove <PROFILE>
-        Remove <PROFILE> keyword / Fuzzy Folder combination
-    ff.py search [<PROFILE>] <query>
-        Search for <query> in <PROFILE>'s dirpath. Display results in Alfred.
-    ff.py searchdir <query>
-        Ad-hoc folder searches. <query> is a dirpath and query. Display
-        results in Alfred.
+    ff.py remove <profile>
+        Remove <profile> keyword / Fuzzy Folder combination
+    ff.py search <query> [<profile>]
+        Search for <query> in <profile>'s dirpath. Display results in Alfred.
+        If no <profile> is specified, <query> is a dirpath-DELIMITER-query
+        combination. Start an ad-hoc fuzzy search with this.
     ff.py keyword <query>
         Choose a keyword for Fuzzy Folder. <query> is a dirpath and query.
         Display options in Alfred. Calls `ff.py update <query>`.
@@ -40,12 +39,12 @@ Usage:
     ff.py manage [<query>]
         Display a list of all configured profiles in Alfred. Allows activation
         or deletion of the profiles.
-    ff.py load-profile <PROFILE>
-        Calls Alfred with the necessary keyword to activate <PROFILE>
+    ff.py load-profile <profile>
+        Calls Alfred with the necessary keyword to activate <profile>
     ff.py alfred-search <query>
         Calls Alfred with <query>. Simple, pass-through function.
-    ff.py alfred-browse <DIR>
-        Calls Alfred with <DIR>, causing Alfred's browser to activate.
+    ff.py alfred-browse <dir>
+        Calls Alfred with <dir>, causing Alfred's browser to activate.
 
 """
 
@@ -63,22 +62,26 @@ from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
 
 __version__ = '1.0'
 __usage__ = """
-ff.py <action> [<DIR> | <PROFILE>] [<query>]
+ff.py <action> [<dir> | <profile>] [<query>]
 
 FuzzyFolders -- fuzzy search across a folder hierarchy
 
+Arguments:
+    <dir>      path to directory
+    <profile>  saved profile number
+    <query>    search query
+
 Usage:
-    ff.py choose <DIR>
-    ff.py add <DIR>
-    ff.py remove <PROFILE>
-    ff.py search [<PROFILE>] <query>
-    ff.py searchdir <query>
+    ff.py choose <dir>
+    ff.py add <dir>
+    ff.py remove <profile>
+    ff.py search <query> [<profile>]
     ff.py keyword <query>
     ff.py update [<query>]
     ff.py manage [<query>]
-    ff.py load-profile <PROFILE>
+    ff.py load-profile <profile>
     ff.py alfred-search <query>
-    ff.py alfred-browse <DIR>
+    ff.py alfred-browse <dir>
 
 This script is meant to be called from Alfred.
 
@@ -228,10 +231,10 @@ class FuzzyFolders(object):
         self.query = None
 
     def run(self, args):
-        if args['<DIR>']:
-            self.dirpath = Dirpath.dirpath(args['<DIR>'])
+        if args['<dir>']:
+            self.dirpath = Dirpath.dirpath(args['<dir>'])
         self.query = args['<query>']
-        self.profile = args['<PROFILE>']
+        self.profile = args['<profile>']
         log.debug('dirpath : {!r}  query : {!r}'.format(self.dirpath,
                                                         self.query))
 
@@ -243,8 +246,6 @@ class FuzzyFolders(object):
             return self.do_remove()
         elif args.get('search'):
             return self.do_search()
-        elif args.get('searchdir'):
-            return self.do_ad_hoc_search()
         elif args.get('keyword'):
             return self.do_choose_keyword()
         elif args.get('update'):
@@ -320,6 +321,8 @@ class FuzzyFolders(object):
 
     def do_search(self):
         """Search Fuzzy Folder."""
+        if not self.profile:
+            return self.do_ad_hoc_search()
         profile = self.wf.settings.get('profiles', {}).get(self.profile)
         if not profile:
             log.debug('Profile not found : {}'.format(self.profile))
@@ -414,7 +417,7 @@ class FuzzyFolders(object):
         for num, profile in profiles.items():
             self.wf.add_item('{} {} {}'.format(profile['keyword'], DELIMITER,
                              Dirpath.dirpath(profile['dirpath']).abbr_noslash),
-                             'Hit ENTER to search keyword',
+                             'Fuzzy search this folder',
                              valid=True,
                              arg=num,
                              autocomplete=profile['keyword'],
@@ -518,7 +521,8 @@ class FuzzyFolders(object):
 
     def do_alfred_search(self):
         """Initiate an ad-hoc search in Alfred"""
-        return run_alfred(':fuzzysearch {} {} '.format(self.query, DELIMITER))
+        dirpath = Dirpath.dirpath(self.query).abbr_noslash
+        return run_alfred(':fuzzysearch {} {} '.format(dirpath, DELIMITER))
 
     def do_alfred_browse(self):
         """Open directory in Alfred"""
@@ -552,7 +556,7 @@ class FuzzyFolders(object):
                 'escaping': 102,
                 'keyword': profile['keyword'],
                 'runningsubtext': 'Loading files\u2026',
-                'script': 'python ff.py search {} "{{query}}"'.format(num),
+                'script': 'python ff.py search "{{query}}" {}'.format(num),
                 'subtext': 'Fuzzy search across subdirectories of {}'.format(
                     dirname),
                 'title': 'Fuzzy Search {}'.format(dirname),
