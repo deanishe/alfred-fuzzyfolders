@@ -45,6 +45,8 @@ Usage:
         Calls Alfred with <query>. Simple, pass-through function.
     ff.py alfred-browse <dir>
         Calls Alfred with <dir>, causing Alfred's browser to activate.
+    ff.py open-help
+        Open the help file in your browser
 
 """
 
@@ -77,6 +79,7 @@ Usage:
     ff.py load-profile <profile>
     ff.py alfred-search <query>
     ff.py alfred-browse <dir>
+    ff.py open-help
 
 Arguments:
     <dir>       Path to directory
@@ -93,10 +96,7 @@ This script is meant to be called from Alfred.
 log = None
 DELIMITER = '➣'
 
-ALFRED_SCRIPT = """tell application "Alfred 2"
-    search "{}"
-end tell
-"""
+ALFRED_SCRIPT = 'tell application "Alfred 2" to search "{}"'
 
 # Keywords of script filters that shouldn't be removed
 RESERVED_KEYWORDS = [
@@ -107,11 +107,11 @@ RESERVED_KEYWORDS = [
     'fuzzy'
 ]
 
-YPOS_START = 690
+YPOS_START = 910
 YSIZE = 120
 
 
-SCRIPT_SEARCH = re.compile(r"""python ff.py search (\d+)""").search
+SCRIPT_SEARCH = re.compile(r"""python ff.py search "\{query\}" (\d+)""").search
 
 
 def _applescriptify(text):
@@ -241,28 +241,20 @@ class FuzzyFolders(object):
         log.debug('dirpath : {!r}  query : {!r}'.format(self.dirpath,
                                                         self.query))
 
-        if args.get('choose'):
-            return self.do_choose()
-        if args.get('add'):
-            return self.do_add()
-        elif args.get('remove'):
-            return self.do_remove()
-        elif args.get('search'):
-            return self.do_search()
-        elif args.get('keyword'):
-            return self.do_choose_keyword()
-        elif args.get('update'):
-            return self.do_update()
-        elif args.get('manage'):
-            return self.do_manage()
-        elif args.get('load-profile'):
-            return self.do_load_profile()
-        elif args.get('alfred-search'):
-            return self.do_alfred_search()
-        elif args.get('alfred-browse'):
-            return self.do_alfred_browse()
-        else:
-            raise ValueError('No action specified')
+        actions = ('choose', 'add', 'remove', 'search', 'keyword',
+                   'update', 'manage', 'load-profile', 'alfred-search',
+                   'alfred-browse', 'open-help')
+
+        for action in actions:
+            if args.get(action):
+                methname = 'do_{}'.format(action.replace('-', '_'))
+                meth = getattr(self, methname, None)
+                if meth:
+                    return meth()
+                else:
+                    break
+
+        raise ValueError('Unknown action : {}'.format(action))
 
     def do_choose(self):
         """Show a list of subdirectories of ``self.dirpath`` to choose from"""
@@ -417,6 +409,13 @@ class FuzzyFolders(object):
                                    match_on=MATCH_ALL ^ MATCH_ALLCHARS)
             profiles = dict(items)
 
+        if not profiles:
+            self.wf.add_item(
+                'No Fuzzy Folders defined',
+                "Use the 'Add Fuzzy Folder' File Action to add some",
+                valid=False,
+                icon=ICON_WARNING)
+
         for num, profile in profiles.items():
             self.wf.add_item('{} {} {}'.format(profile['keyword'], DELIMITER,
                              Dirpath.dirpath(profile['dirpath']).abbr_noslash),
@@ -428,7 +427,7 @@ class FuzzyFolders(object):
 
         self.wf.send_feedback()
 
-    def do_choose_keyword(self):
+    def do_keyword(self):
         """Choose keyword for folder in Alfred."""
 
         dirpath, keyword = self._parse_query(self.query)
@@ -530,6 +529,10 @@ class FuzzyFolders(object):
     def do_alfred_browse(self):
         """Open directory in Alfred"""
         return run_alfred(self.dirpath)
+
+    def do_open_help(self):
+        """Open help file in browser"""
+        return subprocess.call(['open', self.wf.workflowfile('README.html')])
 
     def _update_script_filters(self):
         """Create / update Script Filters in info.plist to match settings."""
