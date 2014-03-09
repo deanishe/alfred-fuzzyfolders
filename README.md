@@ -10,7 +10,7 @@ You can use a **File Action** to intiate a fuzzy search on a folder or to assign
 
 ## Download ##
 
-Get the Workflow from [GitHub](https://github.com/deanishe/alfred-fuzzyfolders/raw/master/Fuzzy%20Folders.alfredworkflow).
+Get the Workflow from [GitHub](https://github.com/deanishe/alfred-fuzzyfolders/raw/master/Fuzzy%20Folders.alfredworkflow) or [Packal](http://www.packal.org/workflow/fuzzy-folders).
 
 ## Commands ##
 
@@ -32,7 +32,7 @@ Get the Workflow from [GitHub](https://github.com/deanishe/alfred-fuzzyfolders/r
 
 ## Bugs, questions, feedback ##
 
-You can [open an issue on GitHub](https://github.com/deanishe/alfred-fuzzyfolders/issues), or post on the Alfred Forum.
+You can [open an issue on GitHub](https://github.com/deanishe/alfred-fuzzyfolders/issues), or post on the [Alfred Forum](http://www.alfredforum.com/topic/4042-fuzzy-folders/).
 
 ## Licensing, other stuff ##
 
