@@ -12,8 +12,7 @@ from __future__ import print_function, unicode_literals
 
 """ff.py -- Fuzzy folder search for Alfred.
 
-How it works
-------------
+Usage:
 
     <DIR> is a path to a directory.
     <query> may be a query or a dirpath and query joined with DELIMITER
