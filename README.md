@@ -10,7 +10,7 @@ You can use a **File Action** to intiate a fuzzy search on a folder or to assign
 
 ## Download ##
 
-Get the Workflow from [GitHub](https://github.com/deanishe/alfred-fuzzyfolders/raw/master/FuzzyFolders.alfredworkflow).
+Get the Workflow from [GitHub](https://github.com/deanishe/alfred-fuzzyfolders/raw/master/Fuzzy%20Folders.alfredworkflow).
 
 ## Commands ##
 
