@@ -28,17 +28,6 @@
 				<string></string>
 			</dict>
 		</array>
-		<key>2E60CB2E-B028-46F9-8A8E-B507A6B9E382</key>
-		<array>
-			<dict>
-				<key>destinationuid</key>
-				<string>3AC082E0-F48F-4094-8B54-E039CDBC418B</string>
-				<key>modifiers</key>
-				<integer>1048576</integer>
-				<key>modifiersubtext</key>
-				<string>Browse in Alfred</string>
-			</dict>
-		</array>
 		<key>5D907FEA-E291-40D6-81EA-03BBF88CBA19</key>
 		<array>
 			<dict>
@@ -560,35 +549,6 @@
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
-		<dict>
-			<key>config</key>
-			<dict>
-				<key>argumenttype</key>
-				<integer>0</integer>
-				<key>escaping</key>
-				<integer>102</integer>
-				<key>keyword</key>
-				<string>docs</string>
-				<key>runningsubtext</key>
-				<string>Loading files…</string>
-				<key>script</key>
-				<string>python ff.py search "{query}" 1</string>
-				<key>subtext</key>
-				<string>Fuzzy search across subdirectories of ~/Documents</string>
-				<key>title</key>
-				<string>Fuzzy Search ~/Documents</string>
-				<key>type</key>
-				<integer>0</integer>
-				<key>withspace</key>
-				<true/>
-			</dict>
-			<key>type</key>
-			<string>alfred.workflow.input.scriptfilter</string>
-			<key>uid</key>
-			<string>2E60CB2E-B028-46F9-8A8E-B507A6B9E382</string>
-			<key>version</key>
-			<integer>0</integer>
-		</dict>
 	</array>
 	<key>readme</key>
 	<string>Fuzzy search across all subdirectories of the selected folder.
@@ -610,11 +570,6 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
-		</dict>
-		<key>2E60CB2E-B028-46F9-8A8E-B507A6B9E382</key>
-		<dict>
-			<key>ypos</key>
-			<real>910</real>
 		</dict>
 		<key>3AC082E0-F48F-4094-8B54-E039CDBC418B</key>
 		<dict>
