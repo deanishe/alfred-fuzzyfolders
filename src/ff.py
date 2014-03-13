@@ -62,7 +62,7 @@ from workflow import Workflow, ICON_NOTE, ICON_WARNING, ICON_INFO
 from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
 
 
-__version__ = '1.0'
+__version__ = '1.1'
 __usage__ = """
 ff.py <action> [<dir> | <profile>] [<query>]
 
@@ -104,6 +104,17 @@ RESERVED_KEYWORDS = [
     ':fzykey',
     ':fzysrch',
     'fuzzy'
+]
+
+
+# actions to connect script filters to
+ACTIONS = [
+    {'destinationuid': '3AC082E0-F48F-4094-8B54-E039CDBC418B',
+     'modifiers': 1048576,
+     'modifiersubtext': 'Browse in Alfred'},
+    {'destinationuid': '8DA965F1-FBE5-4283-A66A-05789AA78758',
+     'modifiers': '',
+     'modifiersubtext': ''},
 ]
 
 YPOS_START = 910
@@ -463,7 +474,8 @@ class FuzzyFolders(object):
                                  valid=False,
                                  icon=ICON_NOTE)
                 for warning in dirpath_warnings:
-                    self.wf.add_item(warning,
+                    self.wf.add_item(
+                        warning,
                         'But you can set multiple keywords per folders',
                         valid=False,
                         icon=ICON_INFO)
@@ -474,8 +486,8 @@ class FuzzyFolders(object):
                 self.wf.add_item(
                     'This keyword > Fuzzy Folder already exists',
                     "'{}' already linked to {}".format(
-                    keyword,
-                    dirpath.abbr_noslash),
+                        keyword,
+                        dirpath.abbr_noslash),
                     valid=False,
                     icon=ICON_WARNING)
             else:
@@ -486,12 +498,14 @@ class FuzzyFolders(object):
                     valid=True,
                     icon='icon.png')
                 for warning in dirpath_warnings:
-                    self.wf.add_item(warning,
+                    self.wf.add_item(
+                        warning,
                         'But you can set multiple keywords per folders',
                         valid=False,
                         icon=ICON_INFO)
                 for warning in keyword_warnings:
-                    self.wf.add_item(warning,
+                    self.wf.add_item(
+                        warning,
                         'But you can use the same keyword for multiple folders',
                         valid=False,
                         icon=ICON_INFO)
@@ -574,11 +588,7 @@ class FuzzyFolders(object):
             uidata[uid] = {'ypos': float(y_pos)}
             y_pos += YSIZE
             # add connection to Browse in Alfred action
-            connections[uid] = [
-                {'destinationuid': '3AC082E0-F48F-4094-8B54-E039CDBC418B',
-                 'modifiers': 1048576,
-                 'modifiersubtext': 'Browse in Alfred'}
-            ]
+            connections[uid] = ACTIONS
 
         plist['objects'] = objects
         plist['uidata'] = uidata

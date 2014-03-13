@@ -79,6 +79,14 @@
 				<key>modifiersubtext</key>
 				<string>Browse in Alfred</string>
 			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>8DA965F1-FBE5-4283-A66A-05789AA78758</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
 		</array>
 		<key>7C8FD108-CDDA-41BE-96B5-2B9A2B0ED46B</key>
 		<array>
@@ -549,6 +557,16 @@
 			<key>version</key>
 			<integer>0</integer>
 		</dict>
+		<dict>
+			<key>config</key>
+			<dict/>
+			<key>type</key>
+			<string>alfred.workflow.action.openfile</string>
+			<key>uid</key>
+			<string>8DA965F1-FBE5-4283-A66A-05789AA78758</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
 	</array>
 	<key>readme</key>
 	<string>Fuzzy search across all subdirectories of the selected folder.
@@ -600,6 +618,11 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<dict>
 			<key>ypos</key>
 			<real>350</real>
+		</dict>
+		<key>8DA965F1-FBE5-4283-A66A-05789AA78758</key>
+		<dict>
+			<key>ypos</key>
+			<real>910</real>
 		</dict>
 		<key>A6C04BBD-768E-4271-9E7F-B19D39A4EDBE</key>
 		<dict>
