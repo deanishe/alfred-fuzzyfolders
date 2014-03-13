@@ -455,7 +455,7 @@ class FuzzyFolders(object):
             # back up the file tree
             return run_alfred(':fzychs {}'.format(
                 Dirpath.dirpath(os.path.dirname(dirpath)).abbr_slash))
-            return self.do_add()
+            # return self.do_add()
         elif keyword == '':  # no keyword as yet
             if not keyword:
                 self.wf.add_item('Enter a keyword for the Folder',

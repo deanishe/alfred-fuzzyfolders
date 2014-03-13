@@ -38,4 +38,6 @@ You can [open an issue on GitHub](https://github.com/deanishe/alfred-fuzzyfolder
 
 This Workflow is made available under the [MIT Licence](http://opensource.org/licenses/MIT).
 
+The icon was made by [Jono Hunt](http://iconaholic.com/).
+
 It uses [docopt](https://github.com/docopt/docopt) and [Alfred-Workflow](https://github.com/deanishe/alfred-workflow).
