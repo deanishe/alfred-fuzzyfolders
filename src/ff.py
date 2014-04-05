@@ -63,7 +63,7 @@ from workflow import (Workflow, ICON_NOTE, ICON_WARNING,
 from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
 
 
-__version__ = '1.1'
+__version__ = '2.0'
 __usage__ = """
 ff.py <action> [<dir> | <profile>] [<query>]
 
