@@ -689,7 +689,9 @@
 	<key>readme</key>
 	<string>Fuzzy search across all subdirectories of the selected folder.
 
-You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or use the “Add Fuzzy Folder” File Action to assign a keyword to perform a fuzzy search in the selected folder.</string>
+You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or use the “Add Fuzzy Folder” File Action to assign a keyword to perform a fuzzy search in the selected folder.
+
+Use keyword `fzyhelp` or see https://github.com/deanishe/alfred-fuzzyfolders for full details.</string>
 	<key>uidata</key>
 	<dict>
 		<key>023B01E3-48DF-47F7-BA7C-FAD3A0D2739D</key>
