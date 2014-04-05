@@ -53,9 +53,17 @@
 				<key>destinationuid</key>
 				<string>68C3E5B4-E26A-4D94-8951-8C2DB76040EA</string>
 				<key>modifiers</key>
-				<integer>1048576</integer>
+				<integer>524288</integer>
 				<key>modifiersubtext</key>
 				<string>Delete this keyword / Fuzzy Folder combination</string>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>B0A332C9-2546-4D18-9221-F4A17F48DF30</string>
+				<key>modifiers</key>
+				<integer>1048576</integer>
+				<key>modifiersubtext</key>
+				<string>Run this Fuzzy Folder search</string>
 			</dict>
 		</array>
 		<key>68C3E5B4-E26A-4D94-8951-8C2DB76040EA</key>
@@ -99,6 +107,19 @@
 				<string></string>
 			</dict>
 		</array>
+		<key>88E0FCE6-68A7-478A-A2FC-A371813EDF8A</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>EE44C011-B59B-4D63-9EB3-DCC28FB95E64</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>8DA965F1-FBE5-4283-A66A-05789AA78758</key>
+		<array/>
 		<key>A6C04BBD-768E-4271-9E7F-B19D39A4EDBE</key>
 		<array>
 			<dict>
@@ -126,6 +147,17 @@
 			<dict>
 				<key>destinationuid</key>
 				<string>BE24EC68-B0F7-4E83-969E-C2932974426F</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>EE44C011-B59B-4D63-9EB3-DCC28FB95E64</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>0E4068F3-D9FD-43D1-B336-6E2B5E9328A2</string>
 				<key>modifiers</key>
 				<integer>0</integer>
 				<key>modifiersubtext</key>
@@ -431,7 +463,7 @@
 				<key>escaping</key>
 				<integer>103</integer>
 				<key>script</key>
-				<string>python ff.py load-profile "{query}"</string>
+				<string>python ff.py load-settings "{query}"</string>
 				<key>type</key>
 				<integer>0</integer>
 			</dict>
@@ -517,6 +549,92 @@
 				<key>escaping</key>
 				<integer>102</integer>
 				<key>script</key>
+				<string>python ff.py load-profile "{query}"</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>B0A332C9-2546-4D18-9221-F4A17F48DF30</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<false/>
+				<key>output</key>
+				<integer>0</integer>
+				<key>removeextension</key>
+				<false/>
+				<key>sticky</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Settings Updated</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>0E4068F3-D9FD-43D1-B336-6E2B5E9328A2</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>1</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>:fzyset</string>
+				<key>runningsubtext</key>
+				<string>Loading settings…</string>
+				<key>script</key>
+				<string>python ff.py settings "{query}"</string>
+				<key>title</key>
+				<string>Change Fuzzy Folder Settings</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>88E0FCE6-68A7-478A-A2FC-A371813EDF8A</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>python ff.py update-setting "{query}"</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>EE44C011-B59B-4D63-9EB3-DCC28FB95E64</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
 				<string>python ff.py alfred-browse "{query}"</string>
 				<key>type</key>
 				<integer>0</integer>
@@ -589,10 +707,15 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 			<key>ypos</key>
 			<real>10</real>
 		</dict>
+		<key>0E4068F3-D9FD-43D1-B336-6E2B5E9328A2</key>
+		<dict>
+			<key>ypos</key>
+			<real>900</real>
+		</dict>
 		<key>3AC082E0-F48F-4094-8B54-E039CDBC418B</key>
 		<dict>
 			<key>ypos</key>
-			<real>790</real>
+			<real>1010</real>
 		</dict>
 		<key>5D907FEA-E291-40D6-81EA-03BBF88CBA19</key>
 		<dict>
@@ -602,7 +725,7 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<key>64A5BF3F-BD7A-4909-A640-27F560FAB9C1</key>
 		<dict>
 			<key>ypos</key>
-			<real>630</real>
+			<real>680</real>
 		</dict>
 		<key>68C3E5B4-E26A-4D94-8951-8C2DB76040EA</key>
 		<dict>
@@ -612,17 +735,22 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<key>7420E6D7-AD54-4CCB-A867-036168FFF97D</key>
 		<dict>
 			<key>ypos</key>
-			<real>790</real>
+			<real>1010</real>
 		</dict>
 		<key>7C8FD108-CDDA-41BE-96B5-2B9A2B0ED46B</key>
 		<dict>
 			<key>ypos</key>
 			<real>350</real>
 		</dict>
+		<key>88E0FCE6-68A7-478A-A2FC-A371813EDF8A</key>
+		<dict>
+			<key>ypos</key>
+			<real>900</real>
+		</dict>
 		<key>8DA965F1-FBE5-4283-A66A-05789AA78758</key>
 		<dict>
 			<key>ypos</key>
-			<real>910</real>
+			<real>1130</real>
 		</dict>
 		<key>A6C04BBD-768E-4271-9E7F-B19D39A4EDBE</key>
 		<dict>
@@ -633,6 +761,11 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<dict>
 			<key>ypos</key>
 			<real>10</real>
+		</dict>
+		<key>B0A332C9-2546-4D18-9221-F4A17F48DF30</key>
+		<dict>
+			<key>ypos</key>
+			<real>790</real>
 		</dict>
 		<key>BE24EC68-B0F7-4E83-969E-C2932974426F</key>
 		<dict>
@@ -668,6 +801,11 @@ You can initiate a fuzzy search via the “Fuzzy Search Here” File Action, or 
 		<dict>
 			<key>ypos</key>
 			<real>460</real>
+		</dict>
+		<key>EE44C011-B59B-4D63-9EB3-DCC28FB95E64</key>
+		<dict>
+			<key>ypos</key>
+			<real>900</real>
 		</dict>
 		<key>F3F04FEC-9503-444C-9AA3-81486E22D88D</key>
 		<dict>
