@@ -58,11 +58,12 @@ from plistlib import readPlist, writePlist
 import uuid
 import unicodedata
 
-from workflow import Workflow, ICON_NOTE, ICON_WARNING, ICON_INFO
+from workflow import (Workflow, ICON_NOTE, ICON_WARNING,
+                      ICON_INFO, ICON_SETTINGS, ICON_ERROR)
 from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
 
 
-__version__ = '1.1'
+__version__ = '2.0'
 __usage__ = """
 ff.py <action> [<dir> | <profile>] [<query>]
 
@@ -79,6 +80,9 @@ Usage:
     ff.py load-profile <profile>
     ff.py alfred-search <query>
     ff.py alfred-browse <dir>
+    ff.py load-settings <profile>
+    ff.py settings <query>
+    ff.py update-setting <query>
     ff.py open-help
 
 Arguments:
@@ -98,26 +102,45 @@ DELIMITER = '➣'
 
 ALFRED_SCRIPT = 'tell application "Alfred 2" to search "{}"'
 
-# Keywords of script filters that shouldn't be removed
+# Keywords of Script Filters that shouldn't be removed
 RESERVED_KEYWORDS = [
     ':fzychs',
     ':fzykey',
     ':fzysrch',
+    ':fzyset',
     'fuzzy'
 ]
 
 
 # actions to connect script filters to
 ACTIONS = [
+    # Browse folder in Alfred
     {'destinationuid': '3AC082E0-F48F-4094-8B54-E039CDBC418B',
      'modifiers': 1048576,
      'modifiersubtext': 'Browse in Alfred'},
+    # Run keyword search
     {'destinationuid': '8DA965F1-FBE5-4283-A66A-05789AA78758',
      'modifiers': '',
      'modifiersubtext': ''},
 ]
 
-YPOS_START = 910
+
+SCOPE_FOLDERS = 1
+SCOPE_FILES = 2
+SCOPE_ALL = 3
+
+SCOPE_NAMES = {
+    SCOPE_FOLDERS: 'folders only',
+    SCOPE_FILES: 'files only',
+    SCOPE_ALL: 'folders and files'
+}
+
+DEFAULT_SETTINGS = {
+    'min': 1,
+    'scope': SCOPE_FOLDERS
+}
+
+YPOS_START = 1130
 YSIZE = 120
 
 
@@ -136,7 +159,7 @@ def run_alfred(query):
     return subprocess.call(['osascript', '-e', script])
 
 
-def search_in(root, query, dirs_only=True):
+def search_in(root, query, scope):
     """Search for files under `root` matching `query`
 
     If `dirs_only` is True, only search for directories.
@@ -145,8 +168,10 @@ def search_in(root, query, dirs_only=True):
 
     cmd = ['mdfind', '-onlyin', root]
     query = ["(kMDItemFSName == '*{}*'c)".format(query)]
-    if dirs_only:
+    if scope == SCOPE_FOLDERS:
         query.append("(kMDItemContentType == 'public.folder')")
+    elif scope == SCOPE_FILES:
+        query.append("(kMDItemContentType != 'public.folder')")
     cmd.append(' && '.join(query))
     log.debug(cmd)
     output = subprocess.check_output(cmd).decode('utf-8')
@@ -244,6 +269,10 @@ class FuzzyFolders(object):
         self.query = None
 
     def run(self, args):
+        # install default settings if there are none
+        if 'defaults' not in self.wf.settings:
+            self.wf.settings['defaults'] = DEFAULT_SETTINGS
+
         if args['<dir>']:
             self.dirpath = Dirpath.dirpath(args['<dir>'])
         self.query = args['<query>']
@@ -253,7 +282,8 @@ class FuzzyFolders(object):
 
         actions = ('choose', 'add', 'remove', 'search', 'keyword',
                    'update', 'manage', 'load-profile', 'alfred-search',
-                   'alfred-browse', 'open-help')
+                   'alfred-browse', 'load-settings', 'update-setting',
+                   'settings', 'open-help')
 
         for action in actions:
             if args.get(action):
@@ -334,33 +364,14 @@ class FuzzyFolders(object):
             return 1
 
         root = profile['dirpath']
-        query = self.query.split()
 
-        if len(query) > 1:
-            mdquery = query[-1]
-            query = query[:-1]
-        else:
-            mdquery = query[0]
-            query = None
+        scope = profile.get('scope', self.wf.settings.get('defaults',
+                            {}).get('scope', SCOPE_FOLDERS))
 
-        log.debug('mdquery : {!r}  query : {!r}'.format(mdquery, query))
-        paths = search_in(root, mdquery)
+        min_query = profile.get('min', self.wf.settings.get('defaults',
+                                {}).get('min', 1))
 
-        if query:
-            paths = filter_paths(query, paths, root)
-
-        home = os.path.expanduser('~/')
-        for path in paths:
-            filename = os.path.basename(path)
-            wf.add_item(filename, path.replace(home, '~/'),
-                        valid=True, arg=path,
-                        autocomplete=filename,
-                        uid=path, type='file',
-                        icon=path, icontype='fileicon')
-
-        wf.send_feedback()
-        log.debug('finished search')
-        return 0
+        return self._search(root, self.query, scope, min_query)
 
     def do_ad_hoc_search(self):
         """Search in directory not stored in a profile"""
@@ -372,25 +383,55 @@ class FuzzyFolders(object):
             return 0
         root, query = self._parse_query(self.query)
         log.debug('root : {!r}  query : {!r}'.format(root, query))
-        if not query:
-            return 0
+
+        scope = self.wf.settings.get('defaults', {}).get('scope',
+                                                         SCOPE_FOLDERS)
+
+        min_query = self.wf.settings.get('defaults', {}).get('min', 1)
+
+        return self._search(root, query, scope, min_query)
+
+    def _search(self, root, query, scope, min_query):
+        """Perform search and display results"""
 
         query = query.split()
 
         if len(query) > 1:
             mdquery = query[-1]
             query = query[:-1]
-        else:
+        elif len(query):
             mdquery = query[0]
             query = None
+        else:
+            mdquery = ''
+            query = None
 
-        log.debug('mdquery : {!r}  query : {!r}'.format(mdquery, query))
-        paths = search_in(root, mdquery)
+        log.debug('mdquery : {!r}  query : {!r}  scope : {!r}'.format(
+                  mdquery, query, scope))
+
+        if len(mdquery) < min_query or not mdquery:
+            self.wf.add_item('Query too short',
+                             'minimum length is {}'.format(min_query),
+                             valid=False,
+                             icon=ICON_WARNING)
+            self.wf.send_feedback()
+            log.debug('Query too short [min : {}] : {!r}'.format(min_query,
+                                                                 mdquery))
+            return 0
+
+        paths = search_in(root, mdquery, scope)
 
         if query:
             paths = filter_paths(query, paths, root)
 
         home = os.path.expanduser('~/')
+
+        if not len(paths):
+            self.wf.add_item('No results found',
+                             'Try a different query',
+                             valid=False,
+                             icon=ICON_WARNING)
+
         for path in paths:
             filename = os.path.basename(path)
             wf.add_item(filename, path.replace(home, '~/'),
@@ -400,9 +441,12 @@ class FuzzyFolders(object):
 
         wf.send_feedback()
         log.debug('finished search')
+        return 0
 
     def do_load_profile(self):
         """Load the corresponding profile in Alfred"""
+        if self.profile == '0':
+            return run_alfred('fuzzy ')
         profile = self.wf.settings.get('profiles', {}).get(self.profile)
         log.debug('loading profile {!r}'.format(profile))
         return run_alfred('{} '.format(profile['keyword']))
@@ -413,12 +457,19 @@ class FuzzyFolders(object):
 
         if self.query:
             items = profiles.items()
+            log.debug('items : {}'.format(items))
             items = self.wf.filter(self.query,
                                    items,
                                    key=lambda t: '{} {}'.format(
                                        t[1]['keyword'], t[1]['dirpath']),
                                    match_on=MATCH_ALL ^ MATCH_ALLCHARS)
             profiles = dict(items)
+
+        self.wf.add_item('Default Fuzzy Folder settings',
+                         'View / change settings',
+                         valid=True,
+                         arg="0",
+                         icon=ICON_SETTINGS)
 
         if not profiles:
             self.wf.add_item(
@@ -430,7 +481,7 @@ class FuzzyFolders(object):
         for num, profile in profiles.items():
             self.wf.add_item('{} {} {}'.format(profile['keyword'], DELIMITER,
                              Dirpath.dirpath(profile['dirpath']).abbr_noslash),
-                             'Fuzzy search this folder',
+                             'View / change settings',
                              valid=True,
                              arg=num,
                              autocomplete=profile['keyword'],
@@ -512,6 +563,177 @@ class FuzzyFolders(object):
                         valid=False,
                         icon=ICON_INFO)
             self.wf.send_feedback()
+
+    def do_load_settings(self):
+        """Tell Alfred to load profile settings"""
+        return run_alfred(':fzyset {}'.format(self.profile))
+
+    def do_settings(self):
+        """Show file/folder support, min query length for folder"""
+        defaults = self.wf.settings.get('defaults', {})
+        profile, setting, value = self._parse_settings(self.query)
+
+        if self.query.endswith(DELIMITER):  # trailing space deleted; back up
+            return run_alfred(':fzyset {}'.format(profile))
+
+        if not profile:
+            return run_alfred('fuzzy ')
+            self.wf.add_item('No Fuzzy Folder specified',
+                             valid=False,
+                             icon=ICON_ERROR)
+            self.wf.send_feedback()
+            return 0
+
+        if profile == '0':  # default settings
+            conf = defaults.copy()
+        else:
+            conf = self.wf.settings.get('profiles', {}).get(profile)
+        log.debug('conf : {}'.format(conf))
+
+        if not setting:
+
+            kw = conf.get('keyword', 'Fuzzy Folder Defaults')
+            path = conf.get('dirpath',
+                            # shown for default settings
+                            'Overridden by Folder-specific settings')
+            self.wf.add_item(kw,
+                             path,
+                             valid=False,
+                             icon='icon.png')
+
+        # Show action to update setting
+        if value is not None:
+            valuestr = ''
+            if value == 0:
+                valuestr = 'default'
+            if setting == 'min':
+                name = 'minimum query length'
+                if not valuestr:
+                    valuestr = unicode(value)
+            elif setting == 'scope':
+                name = 'search scope'
+                if not valuestr:
+                    valuestr = SCOPE_NAMES[value]
+            arg = '{} {} min {} {}'.format(profile, DELIMITER, DELIMITER,
+                                           value)
+            self.wf.add_item('Set {} to {}'.format(name, valuestr),
+                             '↩ to update',
+                             valid=True,
+                             arg=arg,
+                             icon=ICON_SETTINGS)
+            self.wf.send_feedback()
+            return 0
+
+        # Show setting options/ask for query
+        elif setting:
+            if setting == 'min':
+                self.wf.add_item('Enter a minimum query length',
+                                 'Enter 0 to use default',
+                                 valid=False,
+                                 icon=ICON_INFO)
+                self.wf.send_feedback()
+                return 0
+            elif setting == 'scope':
+                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER,
+                                                 SCOPE_FOLDERS)
+                self.wf.add_item('Folders only',
+                                 'Only search for folders',
+                                 arg=arg,
+                                 valid=True,
+                                 icon=ICON_SETTINGS)
+                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER,
+                                                 SCOPE_FILES)
+                self.wf.add_item('Files only',
+                                 'Only search for files',
+                                 arg=arg,
+                                 valid=True,
+                                 icon=ICON_SETTINGS)
+                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER,
+                                                 SCOPE_ALL)
+                self.wf.add_item('Folders and files',
+                                 'Search for folders and files',
+                                 arg=arg,
+                                 valid=True,
+                                 icon=ICON_SETTINGS)
+                arg = '{} {} scope {} 0'.format(profile, DELIMITER, DELIMITER)
+                self.wf.add_item('Default',
+                                 'Use default setting',
+                                 arg=arg,
+                                 valid=True,
+                                 icon=ICON_SETTINGS)
+                self.wf.send_feedback()
+
+            else:
+                self.wf.add_item('Unknown setting : {}'.format(setting),
+                                 'Hit ⌫ to choose again',
+                                 valid=False,
+                                 icon=ICON_ERROR)
+                self.wf.send_feedback()
+                return 0
+
+        # Show available settings
+        else:
+            if 'min' in conf:
+                value = conf['min']
+            else:
+                value = 'default'
+            arg = '{} {} min {} '.format(profile, DELIMITER, DELIMITER)
+            self.wf.add_item(
+                'Minimum query length : {}'.format(value),
+                ('The last part of your query must be this long to '
+                 'trigger a search'),
+                valid=False,
+                arg=arg,
+                autocomplete=arg,
+                icon=ICON_SETTINGS)
+
+            if 'scope' in conf:
+                value = SCOPE_NAMES[conf['scope']]
+            else:
+                value = 'default'
+            arg = '{} {} scope {} '.format(profile, DELIMITER, DELIMITER)
+            self.wf.add_item(
+                'Search scope : {}'.format(value),
+                'Should results be folders and/or files?',
+                valid=False,
+                arg=arg,
+                autocomplete=arg,
+                icon=ICON_SETTINGS)
+
+            self.wf.send_feedback()
+        return 0
+
+    def do_update_setting(self):
+        """Update profile/default settings from ``query``"""
+        profile, setting, value = self._parse_settings(self.query)
+        log.debug('setting {}/{} to {}'.format(profile, setting, value))
+
+        if setting not in ('min', 'scope'):
+            log.error('Invalid setting : {}'.format(setting))
+            print('Invalid setting : {}'.format(setting))
+            return 0
+
+        if profile == '0':
+            self.wf.settings['defaults'][setting] = value
+        else:
+            if value == 0:  # reset to default
+                if setting in self.wf.settings['profiles'][profile]:
+                    del self.wf.settings['profiles'][profile][setting]
+            else:
+                self.wf.settings['profiles'][profile][setting] = value
+
+        self.wf.settings._save()
+
+        if value == 0:
+            value = 'default'
+        elif setting == 'scope':
+            value = SCOPE_NAMES[value]
+
+        setting = {'min': 'minimum query length',
+                   'scope': 'search scope'}.get(setting)
+
+        print('{} set to {}'.format(setting, value))
+        return 0
 
     def do_update(self):
         """Save new/updated Script Filter to info.plist."""
@@ -631,6 +853,20 @@ class FuzzyFolders(object):
         dirpath, query = [s.strip() for s in components]
         dirpath = Dirpath.dirpath(dirpath)
         return (dirpath, query)
+
+    def _parse_settings(self, query):
+        """Split ``query`` into ``profile``, ``setting`` and ``value``"""
+        profile = setting = value = None
+        components = [s.strip() for s in query.split(DELIMITER)]
+        log.debug('components : {}'.format(components))
+        profile = components[0]
+        if len(components) > 1 and components[1]:
+            setting = components[1]
+        if len(components) > 2 and components[2]:
+            value = int(components[2])
+        log.debug('profile : {!r}  setting : {!r}  value : {!r}'.format(
+                  profile, setting, value))
+        return (profile, setting, value)
 
     def _reset_script_filters(self):
         """Load script filters from `info.plist`"""

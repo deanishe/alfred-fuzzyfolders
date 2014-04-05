@@ -654,9 +654,9 @@ sub {
 </style>
 
 </head>
-<body class="normal firstload">
+<body class="normal">
   <div id="wrapper">
-      <h1 id="fuzzyfolders">Fuzzy Folders</h1>
+      <h1 id="fuzzyfoldershelp">Fuzzy Folders Help</h1>
 
 <p>Fuzzy search across folder subtrees.</p>
 
@@ -664,7 +664,7 @@ sub {
 <img src="https://github.com/deanishe/alfred-fuzzyfolders/raw/master/demo.gif" alt="" />
 </figure>
 
-<p>This Workflow provides partial matching of path components, allowing you to drill down into your filesystem with a space-separated query. Each &#8220;word&#8221; of the query will be matched against the components of a directory&#8217;s path, so a three-word query will only match at least three levels down from the specified root directory.</p>
+<p>This Workflow provides partial matching of path components, allowing you to drill down into your filesystem with a space-separated query. Each &#8220;word&#8221; of the query will be matched against the components of a directory or file&#8217;s path, so a three-word query will only match at least three levels down from the specified root directory.</p>
 
 <p>You can use a <strong>File Action</strong> to intiate a fuzzy search on a folder or to assign a keyword to perform a fuzzy search on that folder.</p>
 
@@ -678,11 +678,23 @@ sub {
 <li><code>fuzzy</code> — List your Fuzzy Folders
 
 <ul>
-<li><code>↩</code> — Run the associated keyword</li>
-<li><code>⌘+↩</code> — Delete the keyword–Fuzzy Folder combination</li>
+<li><code>↩</code> — Edit Fuzzy Folder settings</li>
+<li><code>⌘+↩</code> — Start a Fuzzy Folder search with the associated keyword</li>
+<li><code>⌥+↩</code> — Delete the keyword–Fuzzy Folder combination</li>
 </ul></li>
 <li><code>fzyup</code> — Recreate the Script Filters from your saved configuration (useful after an update)</li>
 <li><code>fzyhelp</code> — Open the help file in your browser</li>
+</ul>
+
+<h2 id="settings">Settings</h2>
+
+<p>You can specify these settings globally as defaults for all Fuzzy Folders or on a per-folder basis. For ad-hoc searches via the <code>Fuzzy Search Here</code> file action, the default settings always apply.</p>
+
+<p>Use keyword <code>fuzzy</code> to view and edit settings.</p>
+
+<ul>
+<li><strong>Minimum query length</strong> — The last &#8220;word&#8221; of a query must be this long to trigger a search. Default is <code>1</code>, but increase this number if the search is too slow. This is very often the case if you&#8217;re searching a large subtree and/or also choose to search files.</li>
+<li><strong>Search scope</strong> — Choose to search only for folders, files or both. <strong>Note:</strong> In most cases, searches including files are significantly slower. Consider increasing the <strong>minimum query length</strong> to speed up slow searches.</li>
 </ul>
 
 <h2 id="fileactions">File Actions</h2>
