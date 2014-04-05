@@ -413,9 +413,10 @@ class FuzzyFolders(object):
 
         if self.query:
             items = profiles.items()
-            items = self.wf.filter(self.query, items,
+            items = self.wf.filter(self.query,
+                                   items,
                                    key=lambda t: '{} {}'.format(
-                                   t[1]['keyword'], t[1]['dirpath']),
+                                       t[1]['keyword'], t[1]['dirpath']),
                                    match_on=MATCH_ALL ^ MATCH_ALLCHARS)
             profiles = dict(items)
 
@@ -506,7 +507,8 @@ class FuzzyFolders(object):
                 for warning in keyword_warnings:
                     self.wf.add_item(
                         warning,
-                        'But you can use the same keyword for multiple folders',
+                        ('But you can use the same keyword '
+                         'for multiple folders'),
                         valid=False,
                         icon=ICON_INFO)
             self.wf.send_feedback()
@@ -602,20 +604,20 @@ class FuzzyFolders(object):
         log.debug('Wrote {:d} script filters to info.plist'.format(
                   len(profiles)))
 
-    def _dirpath_abbr(self, dirpath=None):
-        """Return attr:`~FuzzyFolders.dirpath` with ``$HOME`` replaced
-        with ``~/``
+    # def _dirpath_abbr(self, dirpath=None):
+    #     """Return attr:`~FuzzyFolders.dirpath` with ``$HOME`` replaced
+    #     with ``~/``
 
-        """
+    #     """
 
-        if not dirpath:
-            dirpath = self.dirpath
-        if not dirpath.endswith('/'):
-            dirpath += '/'
-        dirpath = dirpath.replace(os.path.expanduser('~/'), '~/')
-        if dirpath.endswith('/') and dirpath not in ('/', '~/'):
-            dirpath = dirpath[:-1]
-        return dirpath
+    #     if not dirpath:
+    #         dirpath = self.dirpath
+    #     if not dirpath.endswith('/'):
+    #         dirpath += '/'
+    #     dirpath = dirpath.replace(os.path.expanduser('~/'), '~/')
+    #     if dirpath.endswith('/') and dirpath not in ('/', '~/'):
+    #         dirpath = dirpath[:-1]
+    #     return dirpath
 
     def _parse_query(self, query):
         """Split ``query`` into ``dirpath`` and ``query``.
