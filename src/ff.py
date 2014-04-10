@@ -191,7 +191,7 @@ def filter_excludes(paths, root, patterns):
 
     """
 
-    log.debug('blacklist patterns : {!r}'.format(patterns))
+    log.debug('exclude patterns : {!r}'.format(patterns))
     hits = []
     for path in paths:
         search_path = path.replace(root, '')
@@ -399,8 +399,8 @@ class FuzzyFolders(object):
 
         min_query = profile.get('min', self.wf.settings.get('defaults',
                                 {}).get('min', 1))
-        excludes = profile.get('excludes', self.wf.settings.get('excludes',
-                                []))
+        excludes = self.wf.settings.get('defaults', {}).get('excludes', [])
+        excludes += profile.get('excludes', [])
 
         return self._search(root, self.query, scope, min_query, excludes)
 
