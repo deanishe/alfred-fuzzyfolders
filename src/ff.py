@@ -54,6 +54,7 @@ import sys
 import os
 import subprocess
 import re
+from fnmatch import fnmatch
 from plistlib import readPlist, writePlist
 import uuid
 import unicodedata
@@ -63,7 +64,8 @@ from workflow import (Workflow, ICON_NOTE, ICON_WARNING,
 from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
 
 
-__version__ = '2.0'
+__version__ = '2.1'
+
 __usage__ = """
 ff.py <action> [<dir> | <profile>] [<query>]
 
@@ -181,6 +183,32 @@ def search_in(root, query, scope):
     return paths
 
 
+def filter_excludes(paths, root, patterns):
+    """Return subset of `paths` not matching patterns.
+
+    `root` is the root fuzzy folder. It's removed from paths before
+    matching.
+
+    """
+
+    log.debug('blacklist patterns : {!r}'.format(patterns))
+    hits = []
+    for path in paths:
+        search_path = path.replace(root, '')
+        for pat in patterns:
+            match = False
+            if fnmatch(search_path, pat):
+                log.debug('match: {!r} --> {!r}'.format(pat, search_path))
+                match = True
+                break
+        if match:
+            continue
+        else:
+            hits.append(path)
+    log.debug('{}/{} after blacklist filtering'.format(len(hits), len(paths)))
+    return hits
+
+
 def filter_paths(queries, paths, root):
     """Return subset of `paths` whose path segments contain the elements
     in ``queries` in the same order. Case-insensitive.
@@ -256,7 +284,8 @@ class Dirpath(unicode):
                 else:
                     dirpath = Dirpath.dirpath(self[:pos])
                 query = self[pos+1:]
-                log.debug('dirpath : {!r}  query : {!r}'.format(dirpath, query))
+                log.debug('dirpath : {!r}  query : {!r}'.format(dirpath,
+                          query))
                 return dirpath, query
         return self, ''
 
@@ -370,8 +399,10 @@ class FuzzyFolders(object):
 
         min_query = profile.get('min', self.wf.settings.get('defaults',
                                 {}).get('min', 1))
+        excludes = profile.get('excludes', self.wf.settings.get('excludes',
+                                []))
 
-        return self._search(root, self.query, scope, min_query)
+        return self._search(root, self.query, scope, min_query, excludes)
 
     def do_ad_hoc_search(self):
         """Search in directory not stored in a profile"""
@@ -388,10 +419,11 @@ class FuzzyFolders(object):
                                                          SCOPE_FOLDERS)
 
         min_query = self.wf.settings.get('defaults', {}).get('min', 1)
+        excludes = self.wf.settings.get('defaults', {}).get('excludes', [])
 
-        return self._search(root, query, scope, min_query)
+        return self._search(root, query, scope, min_query, excludes)
 
-    def _search(self, root, query, scope, min_query):
+    def _search(self, root, query, scope, min_query, excludes):
         """Perform search and display results"""
 
         query = query.split()
@@ -420,6 +452,9 @@ class FuzzyFolders(object):
             return 0
 
         paths = search_in(root, mdquery, scope)
+
+        if excludes:
+            paths = filter_excludes(paths, root, excludes)
 
         if query:
             paths = filter_paths(query, paths, root)
@@ -751,7 +786,7 @@ class FuzzyFolders(object):
         else:
             last = max([int(s) for s in profiles.keys()])
         log.debug('Last profile : {:d}'.format(last))
-        profile = dict(keyword=keyword, dirpath=dirpath)
+        profile = dict(keyword=keyword, dirpath=dirpath, excludes=[])
         profiles[unicode(last + 1)] = profile  # JSON requires string keys
         self.wf.settings['profiles'] = profiles
         self._update_script_filters()
