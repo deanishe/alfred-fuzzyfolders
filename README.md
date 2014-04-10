@@ -1,4 +1,6 @@
-# Fuzzy Folders Alfred Workflow #
+title: Fuzzy Folders Help
+
+# Fuzzy Folders Help #
 
 Fuzzy search across folder subtrees. Add your own keywords to directly search specific folders.
 
@@ -39,6 +41,73 @@ Use keyword `fuzzy` to view and edit settings.
 
 - `↩` — Open folder in Finder
 - `⌘+↩` — Browse folder in Alfred
+
+## Excludes ##
+
+Fuzzy Folders supports global and folder-specific glob-style excludes (similar to `.gitignore`).
+
+Currently, these can only be configured by editing the `settings.json` file by hand. To open `settings.json`, enter the query `fuzzy workflow:opendata` into Alfred. This will open the workflow's data directory in Finder and reveal the `settings.json` file.
+
+The `settings.json` file will look something like this:
+
+```json
+{
+  "defaults": {
+    "min": 2,
+    "scope": 1
+  },
+  "profiles": {
+    "1": {
+      "dirpath": "/Users/dean/Documents",
+      "keyword": "docs"
+    },
+    "2": {
+      "dirpath": "/Users/dean/Code",
+      "excludes": [
+        "*.pyc",
+        "/alfred-*"
+      ],
+      "keyword": "code",
+      "scope": 3
+    },
+    "3": {
+      "dirpath": "/Volumes/Media/Video",
+      "keyword": "vids",
+      "scope": 3
+    },
+    "4": {
+      "dirpath": "/Users/dean/Documents/Translations",
+      "excludes": [],
+      "keyword": "trans"
+    }
+  }
+}
+```
+
+The `defaults` key may not be present if you haven't changed the default settings and won't have an `excludes` member. Any `profiles` (saved fuzzy folders) added using a version of the workflow with support for excludes will be created with an empty list for the key `excludes`, but `profiles` created with earlier versions won't have an `excludes` member. Add it by hand.
+
+`excludes` should be a list of strings containing `.gitignore`/shell-style patterns, e.g.:
+
+```json
+"excludes": [
+        "*.pyc",
+        "/alfred-*"
+      ],
+```
+
+In contrast to the other default settings, `min` (minimum query length) and `scope` (search folders (1), files (2) or both (3)), the default `excludes` will be added to folder-specific ones, not replaced by them.
+
+So to exclude compiled Python files from all fuzzy folders, add `*.pyc` to the `excludes` list under `defaults`:
+
+```json
+{
+  "defaults": {
+    "min": 2,
+    "scope": 1,
+    "excludes": ["*.pyc"]
+  }
+}
+```
 
 ## Bugs, questions, feedback ##
 

@@ -658,7 +658,7 @@ sub {
   <div id="wrapper">
       <h1 id="fuzzyfoldershelp">Fuzzy Folders Help</h1>
 
-<p>Fuzzy search across folder subtrees.</p>
+<p>Fuzzy search across folder subtrees. Add your own keywords to directly search specific folders.</p>
 
 <figure>
 <img src="https://github.com/deanishe/alfred-fuzzyfolders/raw/master/demo.gif" alt="" />
@@ -710,6 +710,67 @@ sub {
 <li><code>↩</code> — Open folder in Finder</li>
 <li><code>⌘+↩</code> — Browse folder in Alfred</li>
 </ul>
+
+<h2 id="excludes">Excludes</h2>
+
+<p>Fuzzy Folders supports global and folder-specific glob-style excludes (similar to <code>.gitignore</code>).</p>
+
+<p>Currently, these can only be configured by editing the <code>settings.json</code> file by hand. To open <code>settings.json</code>, enter the query <code>fuzzy workflow:opendata</code> into Alfred. This will open the workflow&#8217;s data directory in Finder and reveal the <code>settings.json</code> file.</p>
+
+<p>The <code>settings.json</code> file will look something like this:</p>
+
+<pre><code class="json">{
+  &quot;defaults&quot;: {
+    &quot;min&quot;: 2,
+    &quot;scope&quot;: 1
+  },
+  &quot;profiles&quot;: {
+    &quot;1&quot;: {
+      &quot;dirpath&quot;: &quot;/Users/dean/Documents&quot;,
+      &quot;keyword&quot;: &quot;docs&quot;
+    },
+    &quot;2&quot;: {
+      &quot;dirpath&quot;: &quot;/Users/dean/Code&quot;,
+      &quot;excludes&quot;: [
+        &quot;*.pyc&quot;,
+        &quot;/alfred-*&quot;
+      ],
+      &quot;keyword&quot;: &quot;code&quot;,
+      &quot;scope&quot;: 3
+    },
+    &quot;3&quot;: {
+      &quot;dirpath&quot;: &quot;/Volumes/Media/Video&quot;,
+      &quot;keyword&quot;: &quot;vids&quot;,
+      &quot;scope&quot;: 3
+    },
+    &quot;4&quot;: {
+      &quot;dirpath&quot;: &quot;/Users/dean/Documents/Translations&quot;,
+      &quot;excludes&quot;: [],
+      &quot;keyword&quot;: &quot;trans&quot;
+    }
+  }
+}</code></pre>
+
+<p>The <code>defaults</code> key may not be present if you haven&#8217;t changed the default settings and won&#8217;t have an <code>excludes</code> member. Any <code>profiles</code> (saved fuzzy folders) added using a version of the workflow with support for excludes will be created with an empty list for the key <code>excludes</code>, but <code>profiles</code> created with earlier versions won&#8217;t have an <code>excludes</code> member. Add it by hand.</p>
+
+<p><code>excludes</code> should be a list of strings containing <code>.gitignore</code>/shell-style patterns, e.g.:</p>
+
+<pre><code class="json">&quot;excludes&quot;: [
+        &quot;*.pyc&quot;,
+        &quot;/alfred-*&quot;
+      ],</code></pre>
+
+<p>In contrast to the other default settings, <code>min</code> (minimum query length) and <code>scope</code> (search folders (1), files (2) or both (3)), the default <code>excludes</code> will be added to folder-specific ones, not replaced by them.</p>
+
+<p>So to exclude compiled Python files from all fuzzy folders, add <code>*.pyc</code> to the <code>excludes</code> list under <code>defaults</code>:</p>
+
+<pre><code class="json">{
+  &quot;defaults&quot;: {
+    &quot;min&quot;: 2,
+    &quot;scope&quot;: 1,
+    &quot;excludes&quot;: [&quot;*.pyc&quot;]
+  }
+}</code></pre>
 
 <h2 id="bugsquestionsfeedback">Bugs, questions, feedback</h2>
 
