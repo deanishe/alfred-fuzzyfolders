@@ -1,6 +1,6 @@
 # Fuzzy Folders Alfred Workflow #
 
-Fuzzy search across folder subtrees.
+Fuzzy search across folder subtrees. Add your own keywords to directly search specific folders.
 
 ![](https://github.com/deanishe/alfred-fuzzyfolders/raw/master/demo.gif "")
 
