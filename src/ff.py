@@ -764,7 +764,7 @@ class FuzzyFolders(object):
             else:
                 self.wf.settings['profiles'][profile][setting] = value
 
-        self.wf.settings._save()
+        self.wf.settings.save()
 
         if value == 0:
             value = 'default'
@@ -840,6 +840,7 @@ class FuzzyFolders(object):
                 'escaping': 102,
                 'keyword': profile['keyword'],
                 'runningsubtext': 'Loading files\u2026',
+                'queuedelaycustom': 3,  # Auto delay after keypress
                 'script': 'python ff.py search "{{query}}" {}'.format(num),
                 'subtext': 'Fuzzy search across subdirectories of {}'.format(
                     dirname),
