@@ -8,64 +8,7 @@
 # Created on 2014-03-09
 #
 
-from __future__ import print_function, unicode_literals
-
-"""ff.py -- Fuzzy folder search for Alfred.
-
-Usage:
-
-    <dir> is a path to a directory.
-    <query> may be a query or a dirpath and query joined with DELIMITER
-    <profile> is a number referring to a key in `wf.settings['profiles']`
-
-    ff.py choose <dir>
-        Browse <dir> in Alfred. Displays <dir> and its subdirectories. Calls
-        `ff.py add`
-    ff.py add <dir>
-        Add <dir> as Fuzzy Folder. Tells Alfred to ask for a keyword (via
-        `ff.py keyword``).
-    ff.py remove <profile>
-        Remove <profile> keyword / Fuzzy Folder combination
-    ff.py search <query> [<profile>]
-        Search for <query> in <profile>'s dirpath. Display results in Alfred.
-        If no <profile> is specified, <query> is a dirpath-DELIMITER-query
-        combination. Start an ad-hoc fuzzy search with this.
-    ff.py keyword <query>
-        Choose a keyword for Fuzzy Folder. <query> is a dirpath and query.
-        Display options in Alfred. Calls `ff.py update <query>`.
-    ff.py update [<query>]
-        Update/add the Fuzzy Folder / keyword profile in <query>. If no
-        <query> is specified, updates all profiles.
-    ff.py manage [<query>]
-        Display a list of all configured profiles in Alfred. Allows activation
-        or deletion of the profiles.
-    ff.py load-profile <profile>
-        Calls Alfred with the necessary keyword to activate <profile>
-    ff.py alfred-search <query>
-        Calls Alfred with <query>. Simple, pass-through function.
-    ff.py alfred-browse <dir>
-        Calls Alfred with <dir>, causing Alfred's browser to activate.
-    ff.py open-help
-        Open the help file in your browser
-
-"""
-
-import sys
-import os
-import subprocess
-import re
-from fnmatch import fnmatch
-from plistlib import readPlist, writePlist
-import uuid
-import unicodedata
-
-from workflow import (Workflow, ICON_NOTE, ICON_WARNING,
-                      ICON_INFO, ICON_SETTINGS, ICON_ERROR, ICON_SYNC)
-from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
-
-
-__usage__ = """
-ff.py <action> [<dir> | <profile>] [<query>]
+"""ff.py <action> [<dir> | <profile>] [<query>]
 
 FuzzyFolders -- fuzzy search across a folder hierarchy
 
@@ -93,21 +36,65 @@ Arguments:
 Options:
     -h, --help  Show this message
 
+
+Commands:
+    choose <dir>
+        Browse <dir> in Alfred. Displays <dir> and its subdirectories. Calls  `add`
+    add <dir>
+        Add <dir> as Fuzzy Folder. Tells Alfred to ask for a keyword (via `keyword``).
+    remove <profile>
+        Remove <profile> keyword / Fuzzy Folder combination
+    search <query> [<profile>]
+        Search for <query> in <profile>'s dirpath. Display results in Alfred.
+        If no <profile> is specified, <query> is a dirpath-DELIMITER-query
+        combination. Start an ad-hoc fuzzy search with this.
+    keyword <query>
+        Choose a keyword for Fuzzy Folder. <query> is a dirpath and query.
+        Display options in Alfred. Calls `update <query>`.
+    update [<query>]
+        Update/add the Fuzzy Folder / keyword profile in <query>. If no
+        <query> is specified, updates all profiles.
+    manage [<query>]
+        Display a list of all configured profiles in Alfred. Allows activation
+        or deletion of the profiles.
+    load-profile <profile>
+        Calls Alfred with the necessary keyword to activate <profile>
+    alfred-search <query>
+        Calls Alfred with <query>. Simple, pass-through function.
+    alfred-browse <dir>
+        Calls Alfred with <dir>, causing Alfred's browser to activate.
+    open-help
+        Open the help file in your browser
+
 This script is meant to be called from Alfred.
 
 """
 
+from __future__ import print_function, unicode_literals
+
+import sys
+import os
+import subprocess
+import re
+from fnmatch import fnmatch
+from plistlib import readPlist, writePlist
+import uuid
+import unicodedata
+
+from docopt import docopt
+from workflow import (Workflow, ICON_NOTE, ICON_WARNING,
+                      ICON_INFO, ICON_SETTINGS, ICON_ERROR, ICON_SYNC)
+from workflow.util import reload_workflow, run_trigger, search_in_alfred
+from workflow.workflow import MATCH_ALL, MATCH_ALLCHARS
+
+
 log = None
 DELIMITER = '➣'
 
-ALFRED_SCRIPT = 'tell application "Alfred 3" to search "{}"'
-
 # Keywords of Script Filters that shouldn't be removed
 RESERVED_KEYWORDS = [
-    ':fzychs',
-    ':fzykey',
-    ':fzysrch',
-    ':fzyset',
+    'fzyup',
+    'fzyhelp',
     'fuzzy'
 ]
 
@@ -140,23 +127,11 @@ DEFAULT_SETTINGS = {
     'scope': SCOPE_FOLDERS
 }
 
-YPOS_START = 1130
-YSIZE = 120
+YPOS_START = 1360
+YSIZE = 135
 
 
-SCRIPT_SEARCH = re.compile(r"""python ff.py search "\{query\}" (\d+)""").search
-
-
-def _applescriptify(text):
-    """Replace double quotes in text."""
-    return text.replace('"', '" + quote + "')
-
-
-def run_alfred(query):
-    """Run Alfred with ``query`` via AppleScript."""
-    script = ALFRED_SCRIPT.format(_applescriptify(query))
-    log.debug('calling Alfred with : {!r}'.format(script))
-    return subprocess.call(['osascript', '-e', script])
+SCRIPT_SEARCH = re.compile(r"""python ff.py search ".+?" (\d+)""").search
 
 
 def search_in(root, query, scope):
@@ -171,12 +146,13 @@ def search_in(root, query, scope):
         query.append("(kMDItemContentType == 'public.folder')")
     elif scope == SCOPE_FILES:
         query.append("(kMDItemContentType != 'public.folder')")
+
     cmd.append(' && '.join(query))
     log.debug(cmd)
     output = subprocess.check_output(cmd).decode('utf-8')
     output = unicodedata.normalize('NFC', output)
     paths = [s.strip() for s in output.split('\n') if s.strip()]
-    log.debug('{:d} hits from Spotlight index'.format(len(paths)))
+    log.debug('%d hits from Spotlight index', len(paths))
     return paths
 
 
@@ -187,21 +163,21 @@ def filter_excludes(paths, root, patterns):
     matching.
 
     """
-    log.debug('exclude patterns : {!r}'.format(patterns))
+    log.debug('exclude patterns: %r', patterns)
     hits = []
     for path in paths:
         search_path = path.replace(root, '')
         for pat in patterns:
             match = False
             if fnmatch(search_path, pat):
-                log.debug('match: {!r} --> {!r}'.format(pat, search_path))
+                log.debug('match: %r --> %r', pat, search_path)
                 match = True
                 break
         if match:
             continue
         else:
             hits.append(path)
-    log.debug('{}/{} after blacklist filtering'.format(len(hits), len(paths)))
+    log.debug('%d/%d after blacklist filtering', len(hits), len(paths))
     return hits
 
 
@@ -222,14 +198,14 @@ def filter_paths(queries, paths, root):
         for q in queries:
             for j, s in enumerate(components):
                 if q in s:
-                    log.debug('{!r} in {!r}'.format(q, components))
+                    log.debug('%r in %r', q, components)
                     matches += 1
                     components = components[j:]
                     break
         if matches == len(queries):
-            log.debug('match: {!r} --> {!r}'.format(queries, p))
+            log.debug('match: %r --> %r', queries, p)
             hits.add(i)
-    log.debug('{:d}/{:d} after filtering'.format(len(hits), len(paths)))
+    log.debug('%d/%d after filtering', len(hits), len(paths))
     return [p for i, p in enumerate(paths) if i in hits]
 
 
@@ -282,10 +258,11 @@ class Dirpath(unicode):
                     dirpath = Dirpath.dirpath('/')
                 else:
                     dirpath = Dirpath.dirpath(self[:pos])
+
                 query = self[pos+1:]
-                log.debug('dirpath : {!r}  query : {!r}'.format(dirpath,
-                          query))
+                log.debug('dirpath=%r,  query=%r', dirpath, query)
                 return dirpath, query
+
         return self, ''
 
 
@@ -308,8 +285,7 @@ class FuzzyFolders(object):
             self.dirpath = Dirpath.dirpath(args['<dir>'])
         self.query = args['<query>']
         self.profile = args['<profile>']
-        log.debug('dirpath : {!r}  query : {!r}'.format(self.dirpath,
-                                                        self.query))
+        log.debug('dirpath=%r,  query=%r', self.dirpath, self.query)
 
         actions = ('choose', 'add', 'remove', 'search', 'keyword',
                    'update', 'manage', 'load-profile', 'alfred-search',
@@ -330,10 +306,11 @@ class FuzzyFolders(object):
     def do_choose(self):
         """Show a list of subdirectories of ``self.dirpath`` to choose from."""
         dirpath, query = self.dirpath.splitquery()
-        log.debug('dirpath : {!r}  query : {!r}'.format(dirpath, query))
+        log.debug('dirpath=%r,  query=%r', dirpath, query)
         if not os.path.exists(dirpath) or not os.path.isdir(dirpath):
-            log.debug('Does not exist/not a directory : {!r}'.format(dirpath))
+            log.debug('does not exist/not a directory: %r', dirpath)
             return 0
+
         if not query:
             self.wf.add_item(
                 dirpath.abbr_noslash,
@@ -344,16 +321,18 @@ class FuzzyFolders(object):
                 icon=dirpath.abs_noslash,
                 icontype='fileicon',
                 type='file')
+
         files = []
         for filename in os.listdir(dirpath):
             p = os.path.join(dirpath, filename)
             if os.path.isdir(p) and not filename.startswith('.'):
                 files.append((filename, p))
-        log.debug('{:d} folders in {!r}'.format(len(files), dirpath))
+
+        log.debug('%d folder(s) in %r', len(files), dirpath)
         if files and query:
-            log.debug('filtering {:d} files against {!r}'.format(len(files),
-                                                                 query))
+            log.debug('filtering %d files against %r'. len(files), query)
             files = self.wf.filter(query, files, key=lambda x: x[0])
+
         for filename, p in files:
             p = Dirpath.dirpath(p)
             self.wf.add_item(
@@ -365,24 +344,25 @@ class FuzzyFolders(object):
                 icon=p.abs_noslash,
                 icontype='fileicon',
                 type='file')
+
         self.wf.send_feedback()
 
     def do_add(self):
         """Tell Alfred to ask for ``keyword``."""
-        return run_alfred(':fzykey {} {} '.format(
-            self.dirpath.abbr_noslash, DELIMITER))
+        return run_trigger('key', arg='{} {} '.format(self.dirpath.abbr_noslash, DELIMITER))
+        # return run_alfred(':fzykey {} {} '.format(self.dirpath.abbr_noslash, DELIMITER))
 
     def do_remove(self):
         """Remove existing folder."""
         profiles = self.wf.settings.get('profiles', {})
         if self.profile in profiles:
-            log.debug('Removing profile {} ...'.format(self.profile))
+            log.debug('Removing profile %r ...', self.profile)
             del profiles[self.profile]
             self.wf.settings['profiles'] = profiles
             self._update_script_filters()
             print('Deleted keyword / Fuzzy Folder')
         else:
-            log.debug('No such profile {} ...'.format(self.profile))
+            log.debug('No such profile: %r', self.profile)
             print('No such keyword / Fuzzy Folder')
 
     def do_search(self):
@@ -391,7 +371,7 @@ class FuzzyFolders(object):
             return self.do_ad_hoc_search()
         profile = self.wf.settings.get('profiles', {}).get(self.profile)
         if not profile:
-            log.debug('Profile not found : {}'.format(self.profile))
+            log.debug('Profile not found: %r', self.profile)
             return 1
 
         root = profile['dirpath']
@@ -410,12 +390,13 @@ class FuzzyFolders(object):
         """Search in directory not stored in a profile."""
         if DELIMITER not in self.query:  # bounce path back to Alfred
             log.debug('No delimiter found')
-            run_alfred(self.query)
+            search_in_alfred(self.query)
+            # run_alfred(self.query)
             # run_alfred(':fzychs {}'.format(Dirpath.dirpath(
             #            self.query.strip()).abbr_slash))
             return 0
         root, query = self._parse_query(self.query)
-        log.debug('root : {!r}  query : {!r}'.format(root, query))
+        log.debug('root=%r,  query=%r', root, query)
 
         scope = self.wf.settings.get('defaults', {}).get('scope',
                                                          SCOPE_FOLDERS)
@@ -439,8 +420,7 @@ class FuzzyFolders(object):
             mdquery = ''
             query = None
 
-        log.debug('mdquery : {!r}  query : {!r}  scope : {!r}'.format(
-                  mdquery, query, scope))
+        log.debug('mdquery=%r,  query=%r,  scope=%r', mdquery, query, scope)
 
         if len(mdquery) < min_query or not mdquery:
             self.wf.add_item('Query too short',
@@ -448,8 +428,7 @@ class FuzzyFolders(object):
                              valid=False,
                              icon=ICON_WARNING)
             self.wf.send_feedback()
-            log.debug('Query too short [min : {}] : {!r}'.format(min_query,
-                                                                 mdquery))
+            log.debug('Query too short [min=%d]: %r', min_query, mdquery)
             return 0
 
         paths = search_in(root, mdquery, scope)
@@ -482,10 +461,10 @@ class FuzzyFolders(object):
     def do_load_profile(self):
         """Load the corresponding profile in Alfred."""
         if self.profile == '0':
-            return run_alfred('fuzzy ')
+            return run_trigger('fuzzy-folders')
         profile = self.wf.settings.get('profiles', {}).get(self.profile)
-        log.debug('loading profile {!r}'.format(profile))
-        return run_alfred('{} '.format(profile['keyword']))
+        log.debug('loading profile %r ...', profile)
+        return search_in_alfred(profile['keyword'] + ' ')
 
     def do_manage(self):
         """Show list of existing profiles."""
@@ -500,11 +479,10 @@ class FuzzyFolders(object):
 
         if self.query:
             items = profiles.items()
-            log.debug('items : {}'.format(items))
+            log.debug('items: %r', items)
             items = self.wf.filter(self.query,
                                    items,
-                                   key=lambda t: '{} {}'.format(
-                                       t[1]['keyword'], t[1]['dirpath']),
+                                   key=lambda t: '{} {}'.format(t[1]['keyword'], t[1]['dirpath']),
                                    match_on=MATCH_ALL ^ MATCH_ALLCHARS)
             profiles = dict(items)
 
@@ -523,7 +501,7 @@ class FuzzyFolders(object):
 
         for num, profile in profiles.items():
             self.wf.add_item('{} {} {}'.format(profile['keyword'], DELIMITER,
-                             Dirpath.dirpath(profile['dirpath']).abbr_noslash),
+                                                Dirpath.dirpath(profile['dirpath']).abbr_noslash),
                              'View / change settings',
                              valid=True,
                              arg=num,
@@ -535,7 +513,7 @@ class FuzzyFolders(object):
     def do_keyword(self):
         """Choose keyword for folder in Alfred."""
         dirpath, keyword = self._parse_query(self.query)
-        log.debug('dirpath : {!r}  keyword : {!r}'.format(dirpath, keyword))
+        log.debug('dirpath=%r,  keyword=%r', dirpath, keyword)
 
         # check for existing configurations for this dirpath and keyword
         profiles = []
@@ -550,16 +528,17 @@ class FuzzyFolders(object):
 
         for k, p in profiles:
             if keyword == k:
-                keyword_warnings.append("'{}' searches {}".format(
+                keyword_warnings.append(u"'{}' searches {}".format(
                                         k, Dirpath.dirpath(p).abbr_noslash))
             elif dirpath.abs_noslash == p:
-                dirpath_warnings.append(
-                    "Folder already linked to '{}'".format(k))
+                dirpath_warnings.append(u"Folder already linked to '{}'".format(k))
 
         if self.query.endswith(DELIMITER):  # user has deleted trailing space
             # back up the file tree
-            return run_alfred(':fzychs {}'.format(
-                Dirpath.dirpath(os.path.dirname(dirpath)).abbr_slash))
+            return run_trigger('choose-folder',
+                               arg=Dirpath.dirpath(os.path.dirname(dirpath)).abbr_slash)
+            # return run_alfred(':fzychs {}'.format(
+            #     Dirpath.dirpath(os.path.dirname(dirpath)).abbr_slash))
             # return self.do_add()
         elif keyword == '':  # no keyword as yet
             if not keyword:
@@ -579,13 +558,13 @@ class FuzzyFolders(object):
             if profile_exists:
                 self.wf.add_item(
                     'This keyword > Fuzzy Folder already exists',
-                    "'{}' already linked to {}".format(
+                    u"'{}' already linked to {}".format(
                         keyword,
                         dirpath.abbr_noslash),
                     valid=False,
                     icon=ICON_WARNING)
             else:
-                self.wf.add_item("Set '{}' as keyword for {}".format(
+                self.wf.add_item(u"Set '{}' as keyword for {}".format(
                     keyword, dirpath.abbr_noslash),
                     dirpath,
                     arg='{} {} {}'.format(dirpath, DELIMITER, keyword),
@@ -600,15 +579,15 @@ class FuzzyFolders(object):
                 for warning in keyword_warnings:
                     self.wf.add_item(
                         warning,
-                        ('But you can use the same keyword '
-                         'for multiple folders'),
+                        'But you can use the same keyword for multiple folders',
                         valid=False,
                         icon=ICON_INFO)
             self.wf.send_feedback()
 
     def do_load_settings(self):
         """Tell Alfred to load profile settings."""
-        return run_alfred(':fzyset {}'.format(self.profile))
+        return run_trigger('set', arg=self.profile)
+        # return run_alfred(':fzyset {}'.format(self.profile))
 
     def do_settings(self):
         """Show file/folder support, min query length for folder."""
@@ -616,21 +595,23 @@ class FuzzyFolders(object):
         profile, setting, value = self._parse_settings(self.query)
 
         if self.query.endswith(DELIMITER):  # trailing space deleted; back up
-            return run_alfred(':fzyset {}'.format(profile))
+            return run_trigger('set', arg=profile)
+            # return run_alfred(':fzyset {}'.format(profile))
 
         if not profile:
-            return run_alfred('fuzzy ')
-            self.wf.add_item('No Fuzzy Folder specified',
-                             valid=False,
-                             icon=ICON_ERROR)
-            self.wf.send_feedback()
-            return 0
+            return run_trigger('search')
+            # return run_alfred('fuzzy ')
+            # self.wf.add_item('No Fuzzy Folder specified',
+            #                  valid=False,
+            #                  icon=ICON_ERROR)
+            # self.wf.send_feedback()
+            # return 0
 
         if profile == '0':  # default settings
             conf = defaults.copy()
         else:
             conf = self.wf.settings.get('profiles', {}).get(profile)
-        log.debug('conf : {}'.format(conf))
+        log.debug('conf: %r', conf)
 
         if not setting:
 
@@ -676,22 +657,19 @@ class FuzzyFolders(object):
                 self.wf.send_feedback()
                 return 0
             elif setting == 'scope':
-                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER,
-                                                 SCOPE_FOLDERS)
+                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER, SCOPE_FOLDERS)
                 self.wf.add_item('Folders only',
                                  'Only search for folders',
                                  arg=arg,
                                  valid=True,
                                  icon=ICON_SETTINGS)
-                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER,
-                                                 SCOPE_FILES)
+                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER, SCOPE_FILES)
                 self.wf.add_item('Files only',
                                  'Only search for files',
                                  arg=arg,
                                  valid=True,
                                  icon=ICON_SETTINGS)
-                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER,
-                                                 SCOPE_ALL)
+                arg = '{} {} scope {} {}'.format(profile, DELIMITER, DELIMITER, SCOPE_ALL)
                 self.wf.add_item('Folders and files',
                                  'Search for folders and files',
                                  arg=arg,
@@ -722,8 +700,7 @@ class FuzzyFolders(object):
             arg = '{} {} min {} '.format(profile, DELIMITER, DELIMITER)
             self.wf.add_item(
                 'Minimum query length : {}'.format(value),
-                ('The last part of your query must be this long to '
-                 'trigger a search'),
+                'The last part of your query must be this long to trigger a search',
                 valid=False,
                 arg=arg,
                 autocomplete=arg,
@@ -748,11 +725,11 @@ class FuzzyFolders(object):
     def do_update_setting(self):
         """Update profile/default settings from ``query``."""
         profile, setting, value = self._parse_settings(self.query)
-        log.debug('setting {}/{} to {}'.format(profile, setting, value))
+        log.debug('setting %s/%s to %r', profile, setting, value)
 
         if setting not in ('min', 'scope'):
-            log.error('Invalid setting : {}'.format(setting))
-            print('Invalid setting : {}'.format(setting))
+            log.error('Invalid setting: %s', setting)
+            print('Invalid setting: %s', setting)
             return 0
 
         if profile == '0':
@@ -781,32 +758,35 @@ class FuzzyFolders(object):
         """Save new/updated Script Filter to info.plist."""
         if not self.query:  # Just do an update
             self._update_script_filters()
+            reload_workflow()
             return 0
 
         dirpath, keyword = self._parse_query(self.query)
-        log.debug('dirpath : {!r}  keyword : {!r}'.format(dirpath, keyword))
+        log.debug('dirpath=%r, keyword=%r', dirpath, keyword)
         profiles = self.wf.settings.setdefault('profiles', {})
-        log.debug('profiles : {!r}'.format(profiles))
+        log.debug('profiles: %r', profiles)
         if not profiles:
             last = 0
         else:
             last = max([int(s) for s in profiles.keys()])
-        log.debug('Last profile : {:d}'.format(last))
+        log.debug('Last profile: %d', last)
         profile = dict(keyword=keyword, dirpath=dirpath, excludes=[])
         profiles[unicode(last + 1)] = profile  # JSON requires string keys
         self.wf.settings['profiles'] = profiles
         self._update_script_filters()
-        print("Keyword '{}' searches {}".format(
-              keyword, Dirpath.dirpath(dirpath).abbr_noslash))
+        print(u"Keyword '{}' searches {}".format(keyword, Dirpath.dirpath(dirpath).abbr_noslash))
+        reload_workflow()
 
     def do_alfred_search(self):
         """Initiate an ad-hoc search in Alfred."""
         dirpath = Dirpath.dirpath(self.query).abbr_noslash
-        return run_alfred(':fzysrch {} {} '.format(dirpath, DELIMITER))
+        return run_trigger('search', arg='{} {} '.format(dirpath, DELIMITER))
+        # return run_alfred(':fzysrch {} {} '.format(dirpath, DELIMITER))
 
-    def do_alfred_browse(self):
-        """Open directory in Alfred."""
-        return run_alfred(self.dirpath)
+    # def do_alfred_browse(self):
+    #     """Open directory in Alfred."""
+    #     return browse_in_alfred(self.dirpath)
+    #     # return run_alfred(self.dirpath)
 
     def do_open_help(self):
         """Open help file in browser."""
@@ -841,10 +821,11 @@ class FuzzyFolders(object):
                 'keyword': profile['keyword'],
                 'runningsubtext': 'Loading files\u2026',
                 'queuedelaycustom': 3,  # Auto delay after keypress
-                'script': 'python ff.py search "{{query}}" {}'.format(num),
+                'script': 'python ff.py search "$1" {}'.format(num),
                 'subtext': 'Fuzzy search across subdirectories of {}'.format(
                     dirname),
                 'title': 'Fuzzy Search {}'.format(dirname),
+                'scriptargtype': 1,
                 'type': 0,
                 'withspace': True
             }
@@ -865,8 +846,7 @@ class FuzzyFolders(object):
         os.rename(plisttemp, plistpath)
         os.utime(plistpath, None)
 
-        log.debug('Wrote {:d} script filters to info.plist'.format(
-                  len(profiles)))
+        log.debug('Wrote %d Script Filters to info.plist', len(profiles))
 
     # def _dirpath_abbr(self, dirpath=None):
     #     """Return attr:`~FuzzyFolders.dirpath` with ``$HOME`` replaced
@@ -900,14 +880,13 @@ class FuzzyFolders(object):
         """Split ``query`` into ``profile``, ``setting`` and ``value``."""
         profile = setting = value = None
         components = [s.strip() for s in query.split(DELIMITER)]
-        log.debug('components : {}'.format(components))
+        log.debug('components: %r', components)
         profile = components[0]
         if len(components) > 1 and components[1]:
             setting = components[1]
         if len(components) > 2 and components[2]:
             value = int(components[2])
-        log.debug('profile : {!r}  setting : {!r}  value : {!r}'.format(
-                  profile, setting, value))
+        log.debug('profile=%, setting=%r,  value=%r', profile, setting, value)
         return (profile, setting, value)
 
     def _reset_script_filters(self):
@@ -934,7 +913,7 @@ class FuzzyFolders(object):
                 continue
 
             script = obj.get('config', {}).get('script', '')
-            log.debug('script : {!r}'.format(script))
+            log.debug('script: %r', script)
             m = SCRIPT_SEARCH(script)
             if not m:
                 keep.append(obj)
@@ -970,23 +949,19 @@ class FuzzyFolders(object):
 
         writePlist(plist, plistpath)
 
-        log.debug('{} script filters deleted from info.plist'.format(count))
+        log.debug('%d Script Filters deleted from info.plist', count)
         return script_filters
 
 
 def main(wf):
     """Run workflow."""
-    from docopt import docopt
-    args = docopt(__usage__, argv=wf.args, version=wf.version)
-    log.debug('wf.args : {!r}'.format(wf.args))
-    log.debug('args : {!r}'.format(args))
+    args = docopt(__doc__, argv=wf.args, version=wf.version)
+    log.debug('args: %r', args)
     ff = FuzzyFolders(wf)
     return ff.run(args)
 
 
 if __name__ == '__main__':
-    wf = Workflow(
-        libraries=[os.path.join(os.path.dirname(__file__), 'lib')],
-        update_settings={'github_slug': 'deanishe/alfred-fuzzyfolders'})
+    wf = Workflow(update_settings={'github_slug': 'deanishe/alfred-fuzzyfolders'})
     log = wf.logger
     sys.exit(wf.run(main))
